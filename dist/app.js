@@ -53,12 +53,52 @@ function listChildren(){
  const show=!!term&&selected===null;
  list.hidden=!show;input.setAttribute('aria-expanded',String(show));
  if(!show){list.innerHTML='';return}
- list.innerHTML=matches.map(c=>'<button class="child" data-child="'+c.id+'"><span class="avatar">'+initials(c.name)+'</span><span><strong>'+esc(displayChildName(c))+'</strong><small>'+esc(c.groups.join(' · '))+'</small></span><span class="chevron">›</span></button>').join('')||'<div class="empty">Никого не нашли.<br>Попробуйте другую часть ФИО.</div>';
+ list.innerHTML=matches.map(c=>'<button class="child" data-child="'+c.id+'"><span class="avatar">'+initials(c.name)+'</span><span><strong>'+esc(displayChildName(c))+'</strong></span><span class="chevron">›</span></button>').join('')||'<div class="empty">Никого не нашли.<br>Попробуйте другую часть ФИО.</div>';
 }
-function profile(){const c=children.find(c=>c.id===selected);$('#profile').hidden=!c;if(!c){$('#profile').innerHTML='';return}const balance=c.history.reduce((s,t)=>s+t[2],0);$('#profile').innerHTML='<section class="panel"><div class="profile-head"><span class="avatar">'+initials(c.name)+'</span><div><h2>'+esc(displayChildName(c))+'</h2><p>Карточка ребёнка</p></div></div><div class="balance"><div><div class="balance-label">Текущий счёт</div><div class="balance-value">'+balance.toLocaleString('ru')+'<small>КК</small></div></div><div class="coin" aria-hidden="true">КК</div></div><div class="groups"><span class="muted">Твои группы</span>'+c.groups.map(g=>'<span class="group">'+esc(g)+'</span>').join('')+'</div></section><section class="panel history"><div class="history-heading"><h2>История начислений и списаний</h2><span class="muted">'+c.history.length+' операций</span></div><div class="transactions">'+c.history.map(t=>'<div class="transaction"><span class="operation '+(t[2]<0?'minus':'')+'">'+(t[2]<0?'↗':'↙')+'</span><div><strong>'+esc(t[2]<0?'Списание за товар: '+t[1]:'Начисление')+'</strong><small>'+new Date(t[0]+'T12:00:00Z').toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})+'</small></div><div class="amount '+(t[2]<0?'negative':'')+'">'+(t[2]>0?'+':'−')+Math.abs(t[2])+'<small>КК</small></div></div>').join('')+'</div></section>'}
+const ATTENDANCE_GOAL=4,ATTENDANCE_REWARD=5;
+function currentAttendanceDate(now=new Date()){
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Vladivostok',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+ const part=type=>parts.find(p=>p.type===type).value;
+ return part('year')+'-'+part('month')+'-'+part('day');
+}
+function isLessonAccrual(transaction){return transaction[2]>0&&(!transaction[3]||transaction[3]==='lesson')}
+function accountWithAttendance(history,today=currentAttendanceDate()){
+ // Rebuild bonuses from lesson records rather than appending them to source history.
+ // A tagged bonus never counts as a lesson; debits do not interrupt attendance.
+ const base=history.filter(t=>t[3]!=='attendance-bonus'),byMonth=new Map();
+ for(const t of base){
+  if(!isLessonAccrual(t)||t[0]>today)continue;
+  const month=t[0].slice(0,7);
+  if(!byMonth.has(month))byMonth.set(month,[]);
+  byMonth.get(month).push(t);
+ }
+ const bonuses=[];
+ for(const [month,lessons] of byMonth){
+  lessons.sort((a,b)=>a[0].localeCompare(b[0]));
+  if(lessons.length>=ATTENDANCE_GOAL){
+   const earnedOn=lessons[ATTENDANCE_GOAL-1][0];
+   bonuses.push([earnedOn,'Бонус за посещения',ATTENDANCE_REWARD,'attendance-bonus',month]);
+  }
+ }
+ const transactions=[...base,...bonuses].sort((a,b)=>b[0].localeCompare(a[0])||Number(b[3]==='attendance-bonus')-Number(a[3]==='attendance-bonus'));
+ const month=today.slice(0,7),visits=(byMonth.get(month)||[]).length;
+ return {transactions,balance:transactions.reduce((sum,t)=>sum+t[2],0),month,visits,bonus:bonuses.find(t=>t[4]===month)||null};
+}
+function attendanceBlock(account){
+ const monthLabel=new Date(account.month+'-15T12:00:00Z').toLocaleDateString('ru',{month:'long',year:'numeric',timeZone:'UTC'});
+ const remaining=Math.max(0,ATTENDANCE_GOAL-account.visits);
+ const status=account.bonus?'Бонус +5 КК начислен':remaining===1?'Ещё 1 посещение до бонуса +5 КК':'Ещё '+remaining+' посещения до бонуса +5 КК';
+ return '<section class="attendance" aria-label="Посещения занятий"><div class="attendance-heading"><h3>Посещения занятий</h3><span class="muted">'+esc(monthLabel)+'</span></div><p class="attendance-count">Посещено за месяц: <strong>'+account.visits+'</strong></p><div class="attendance-progress" role="img" aria-label="Посещений за месяц: '+account.visits+'. Для бонуса нужно '+ATTENDANCE_GOAL+'.">'+Array.from({length:ATTENDANCE_GOAL},(_,i)=>'<span class="attendance-step '+(i<account.visits?'done':'')+'" aria-hidden="true">'+(i<account.visits?'✓':i+1)+'</span>').join('')+'</div><p class="attendance-status '+(account.bonus?'earned':'')+'">'+status+'</p><p class="attendance-rule">4 посещения в календарном месяце — +5 КК. Бонус начисляется один раз в месяц.</p></section>';
+}
+function profile(){
+ const c=children.find(c=>c.id===selected);$('#profile').hidden=!c;
+ if(!c){$('#profile').innerHTML='';return}
+ const account=accountWithAttendance(c.history);
+ $('#profile').innerHTML='<section class="panel"><div class="profile-head"><span class="avatar">'+initials(c.name)+'</span><div><h2>'+esc(displayChildName(c))+'</h2><p>Карточка ребёнка</p></div></div><div class="balance"><div><div class="balance-label">Текущий счёт</div><div class="balance-value">'+account.balance.toLocaleString('ru')+'<small>КК</small></div></div><div class="coin" aria-hidden="true">КК</div></div>'+attendanceBlock(account)+'</section><section class="panel history"><div class="history-heading"><h2>История начислений и списаний</h2><span class="muted">'+account.transactions.length+' операций</span></div><div class="transactions">'+account.transactions.map(t=>'<div class="transaction"><span class="operation '+(t[2]<0?'minus':'')+'">'+(t[2]<0?'↗':t[3]==='attendance-bonus'?'★':'↙')+'</span><div><strong>'+esc(t[2]<0?'Списание за товар: '+t[1]:t[3]==='attendance-bonus'?'Бонус за посещения':'Начисление')+'</strong><small>'+new Date(t[0]+'T12:00:00Z').toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})+'</small></div><div class="amount '+(t[2]<0?'negative':'')+'">'+(t[2]>0?'+':'−')+Math.abs(t[2])+'<small>КК</small></div></div>').join('')+'</div></section>';
+}
 function productCard(p){return '<article class="product"><div class="product-art">'+art(p)+'</div><div class="product-body"><h3>'+esc(p.name)+'</h3><p>'+esc(p.description)+'</p><div class="product-bottom"><span class="price">'+p.price+' <small>КК</small></span></div></div></article>'}
 function render(){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('#admin-entry').textContent=admin?(page==='admin'?'Админ · Выйти ↗':'Панель администратора ↗'):'Для администратора ↗';if(page==='account'){
- $('#app').innerHTML='<section class="panel search-instructions" aria-label="Инструкция по поиску"><p class="note" id="search-help">Введи фамилию или часть ФИО и выбери ребёнка из результатов поиска. Ниже появятся его счёт КК, группы и история начислений и списаний.</p></section><section class="panel account-search"><h1>Выберите ребёнка</h1><div class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Введи свое ФИО" aria-label="Введи свое ФИО" aria-describedby="search-help" aria-controls="child-list" aria-expanded="false" autocomplete="off" value="'+esc(query)+'"></div><div class="child-list" id="child-list" hidden></div></section><div class="account-profile" id="profile" hidden></div>';
+ $('#app').innerHTML='<section class="panel search-instructions" aria-label="Инструкция по поиску"><p class="note" id="search-help">Введи фамилию или часть ФИО и выбери ребёнка из результатов поиска. Ниже появятся его счёт КК, посещения занятий и история начислений и списаний.</p></section><section class="panel account-search"><h1>Выберите ребёнка</h1><div class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Введи свое ФИО" aria-label="Введи свое ФИО" aria-describedby="search-help" aria-controls="child-list" aria-expanded="false" autocomplete="off" value="'+esc(query)+'"></div><div class="child-list" id="child-list" hidden></div></section><div class="account-profile" id="profile" hidden></div>';
  listChildren();profile();$('#search').addEventListener('input',e=>{query=e.target.value;selected=null;listChildren();profile()});
  $('#search').addEventListener('keydown',e=>{if(e.key==='ArrowDown'&&!$('#child-list').hidden){const first=$('#child-list button');if(first){e.preventDefault();first.focus()}}});
 }else if(page==='store'){const s=db.showcases.find(s=>s.id===db.published),products=s?s.items.map(id=>db.products.find(p=>p.id===id)).filter(Boolean):[];$('#app').innerHTML='<div class="intro"><div><h1>Витрина товаров</h1><p>Награды за старание и новые открытия.</p></div>'+(s?'<span class="tag store-head"><i class="dot"></i>'+esc(s.name)+'</span>':'')+'</div>'+(products.length?'<section class="store"><div class="product-grid">'+products.map(productCard).join('')+'</div></section>':'<div class="panel empty">'+(s?'В этой витрине пока нет товаров.':'Витрина пока не опубликована.')+'</div>')}else if(admin)renderAdmin();else{page='account';render()}}
@@ -75,4 +115,6 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
 $('#admin-entry').onclick=()=>{if(admin&&page!=='admin'){page='admin';render()}else if(admin){admin=false;page='account';render();toast('Вы вышли из админской части')}else login()};
 $('#modal').addEventListener('click',e=>{if(e.target===$('#modal')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close()}});
 window.addEventListener('storage',e=>{if(e.key==='capybara-demo-v1'&&e.newValue){try{const next=JSON.parse(e.newValue);if(Array.isArray(next.products)&&Array.isArray(next.showcases)){db=upgradeCatalog(next);try{const cleaned=JSON.stringify(db);if(cleaned!==e.newValue)localStorage.setItem('capybara-demo-v1',cleaned)}catch{}render();if($('#modal').open){$('#modal').close();toast('Данные обновлены в другой вкладке. Откройте карточку заново.')}}}catch{}}});
+let attendanceDate=currentAttendanceDate();
+setInterval(()=>{const today=currentAttendanceDate();if(today!==attendanceDate){attendanceDate=today;if(page==='account'&&selected!==null)profile()}},60000);
 render();
