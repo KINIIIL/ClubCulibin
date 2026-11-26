@@ -35,15 +35,37 @@
 .search-instructions{margin-bottom:20px;background:var(--pale);border-color:#dde6d7}
 .search-instructions .note{margin:0;font-size:14px;color:var(--ink)}
 
-.attendance{margin-top:24px;padding-top:24px;border-top:1px solid var(--line)}
-.attendance-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-.attendance-heading h3{margin:0;font-size:14px}
-.attendance-heading .muted{font-size:11px;text-transform:capitalize}
-.attendance-progress{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.attendance-step{height:35px;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:#f6f7f2;color:var(--muted);font-size:13px;font-weight:600}
-.attendance-step.done{background:#e7f0dd;border-color:#d6e4c8;color:var(--green)}
-.attendance-status{font-size:12px;margin:14px 0 8px}
-.attendance-status.earned{color:var(--green);font-weight:700}
-.attendance-rule{font-size:11px;line-height:1.6;color:var(--muted);margin:0}
 
-.attendance-count{font-size:12px;margin:0 0 12px}
+/* Read-only motivation calendar in the child's account. */
+.motivation{margin-top:25px;padding-top:23px;border-top:1px solid var(--line)}
+.motivation-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px;flex-wrap:wrap}
+.motivation-top h3{font-size:16px;letter-spacing:-.3px;margin:0}
+.motivation-reward{display:flex;justify-content:space-between;align-items:center;gap:15px;background:#f0f5e9;border:1px solid #e0ead4;border-radius:13px;padding:17px}
+.motivation-reward.is-earned{background:#ebf5e9;border-color:#d3e7cb}
+.motivation-title{font-size:15px;font-weight:800;letter-spacing:-.2px;line-height:1.45;margin:0 0 5px}
+.motivation-description{font-size:12px;line-height:1.6;color:#6c7f63;margin:0}
+.motivation-prize{background:#fcf6e4;border:1px solid #ecdfb8;border-radius:11px;min-height:45px;padding:9px 11px;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0;color:#947335}
+.motivation-prize svg{flex-shrink:0}.motivation-prize strong{font-size:19px;font-weight:800}.motivation-prize small{font-size:11px;font-weight:700}
+.motivation-progress-label{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:17px 0 9px;color:#78856f;font-size:12px}.motivation-progress-label strong{color:#45633d;margin-left:4px}
+.motivation-streak{padding:4px 8px;border-radius:6px;background:#f2f5ec;color:#65795b;font-size:11px;white-space:nowrap}
+.motivation-progress{height:7px;background:#e9ede3;border-radius:10px;overflow:hidden}.motivation-progress>span{display:block;height:100%;background:#729664;border-radius:10px}
+.visit-calendar{border:1px solid #e4e9df;border-radius:13px;background:#fff;padding:16px 14px 12px;margin-top:20px}
+.visit-calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.visit-calendar-toolbar>div{text-align:center}.visit-calendar-toolbar h4{font-size:15px;line-height:1.45;margin:0;text-transform:capitalize;font-weight:700}
+.visit-month-button{width:31px;height:31px;padding:6px;display:grid;place-items:center;border:1px solid #e5eade;border-radius:8px;color:#71866a;flex-shrink:0}.visit-month-button:disabled{opacity:.25;cursor:default}.visit-current-label{display:block;color:#94a08e;font-size:10px;margin-top:3px}.visit-return{padding:0;border-radius:0;font-size:10px;color:#5a7d4d;margin-top:3px;text-decoration:underline;text-underline-offset:3px}
+.visit-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.visit-weekday{display:grid;place-items:center;height:22px;color:#91a087;font-size:11px;font-weight:600}.visit-calendar-blank{height:42px}
+.visit-calendar-day{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:42px;border-radius:9px;padding:1px;background:#fff;border:1px solid transparent;font-size:13px;font-weight:500;color:#a1aa99;line-height:1.3}
+.visit-calendar-day:hover{background:#f5f7f0;border-color:#e2e9db}.visit-calendar-day.is-lesson{background:#f2f6ec;color:#6e8562;border-color:#e8eedf;font-weight:600}.visit-calendar-day.is-homework{background:#f2edf9;border-color:#e8dff3;color:#8669a2}.visit-calendar-day.is-pending{background:#f5f6f3;color:#7e8876;border-color:#e8ebe2}.visit-calendar-day.is-done{background:#e1eed8;border-color:#d4e4c7;color:#3d6b34;font-weight:700}.visit-calendar-day.is-today{outline:2px solid #9cb68c;outline-offset:1px}.visit-calendar-day.is-excluded{text-decoration:line-through;border-style:dashed;border-color:#e0e5da;color:#adb4a6}.visit-calendar-day.is-bonus{box-shadow:inset 0 0 0 1px #d9bd72}
+.visit-date-number{font-size:13px}.visit-done-icon{position:absolute;top:2px;right:4px;font-size:9px;font-weight:700;color:#6b935c}.visit-date-note{display:block;font-size:9px;line-height:1.2;font-weight:600;margin-top:1px}.visit-award-star{position:absolute;bottom:1px;right:3px;color:#ad8e43;font-size:10px}
+.visit-calendar-legend{display:flex;gap:9px 14px;flex-wrap:wrap;margin-top:15px;padding-top:11px;border-top:1px solid #f0f2eb;color:#7e8c75;font-size:10px}.visit-calendar-legend>span{display:flex;align-items:center;gap:5px}.visit-key{display:inline-block;width:9px;height:9px;border-radius:3px}.visit-key.done{background:#dcebd2;border:1px solid #bfd5ae}.visit-key.planned{background:#f2f6ec;border:1px solid #dfe7d6}.visit-key.pending{background:#e9ece6;border:1px solid #cfd5c9}.visit-key.homework{background:#f0e8f8;border:1px solid #d9c9e9}.visit-calendar-hint{font-size:10px;color:#a0aa98;margin:9px 0 0;text-align:center}
+.visit-day-details{text-align:center}.visit-day-details>h3{font-size:19px;margin:15px 0 10px}.visit-day-details>p{color:var(--muted);font-size:14px;line-height:1.7}.visit-detail-state{margin:auto;width:53px;height:53px;display:grid;place-items:center;border-radius:16px;background:#f1f4ec;color:#8b9c7d}.visit-detail-state.is-done{background:#e5f0dc;color:#669251}.visit-day-details .visit-detail-proof{color:#527348;font-size:13px;margin-top:15px;font-weight:600}.visit-detail-bonus{display:flex;align-items:center;justify-content:center;gap:7px;background:#fcf6e6;padding:13px;margin:16px 0 0;border-radius:9px;color:#9a7e3e!important;font-size:13px!important;font-weight:700}
+@media(max-width:760px){.motivation-top{align-items:flex-start}.motivation-reward{padding:15px;gap:12px}.motivation-title{font-size:14px}.motivation-prize{padding:8px;gap:3px}.motivation-prize strong{font-size:17px}.motivation-prize svg{width:15px;height:15px}.visit-calendar{padding:14px 12px 11px}.visit-calendar-day{height:43px}.visit-calendar-legend{gap:7px 10px}}
+@media(prefers-reduced-motion:no-preference){.motivation-progress>span{transition:width .25s ease}}
+.motivation-title{font-size:16px}.motivation-description{font-size:13px}.motivation-prize small{font-size:12px}.motivation-progress-label{font-size:13px}.motivation-streak{font-size:12px}.visit-calendar-toolbar h4{font-size:16px}.visit-current-label,.visit-return,.visit-weekday{font-size:12px}.visit-calendar-day,.visit-date-number{font-size:14px}.visit-date-note{font-size:10px}.visit-calendar-legend,.visit-calendar-hint{font-size:12px}
+@media(max-width:760px){.motivation-title{font-size:15px}}
+
+.visit-calendar-day.is-partial{background:linear-gradient(135deg,#e1eed8 50%,#f5f6f3 50%);border-color:#d4dec9;color:#536b47}.visit-day-details+.visit-day-details{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+
+.motivation-message+.motivation-message{margin-top:20px;padding-top:19px;border-top:1px solid var(--line)}
+.motivation-copy{font-size:13px;line-height:1.7;color:#6c7f63;min-width:0;overflow-wrap:anywhere}
+.motivation-copy p{margin:0}.motivation-copy p+p{margin-top:8px}.motivation-copy strong{color:var(--ink);font-weight:800}.motivation-copy p:first-child strong{font-size:16px}
